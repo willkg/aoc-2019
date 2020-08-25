@@ -19,6 +19,19 @@ fn get_fuel(mass: i32) -> i32 {
     total
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_get_fuel() {
+        assert_eq!(get_fuel(-1), 0);
+        assert_eq!(get_fuel(0), 0);
+        assert_eq!(get_fuel(12), 2);
+        assert_eq!(get_fuel(100), 39);
+    }
+}
+
 fn main() {
     // The first arg is the data file path
     let datafile_arg = match std::env::args().nth(1) {
