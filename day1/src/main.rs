@@ -6,6 +6,19 @@ use std::fs::File;
 use std::io::{self, BufRead};
 use std::path::Path;
 
+/// Return the amount of fuel required for this mass plus the fuel required.
+fn get_fuel(mass: i32) -> i32 {
+    let mut total = 0;
+    let mut fuel = mass;
+    while fuel > 0 {
+        fuel = (fuel / 3) - 2;
+        if fuel > 0 {
+            total = total + fuel;
+        }
+    }
+    total
+}
+
 fn main() {
     // The first arg is the data file path
     let datafile_arg = match std::env::args().nth(1) {
@@ -38,9 +51,9 @@ fn main() {
             Err(_) => (),
             Ok(data) => {
                 let data_i = data.parse::<i32>().unwrap();
-                let converted_data = (data_i / 3) - 2;
-                println!("{} -> {}", data_i, converted_data);
-                total = total + converted_data;
+                let fuel = get_fuel(data_i);
+                println!("{} -> {}", data_i, fuel);
+                total = total + fuel;
             }
         };
     }
