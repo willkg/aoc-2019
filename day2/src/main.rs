@@ -7,7 +7,7 @@ use std::io::prelude::*;
 use std::path::Path;
 
 /// Run the given program and return the output
-fn run_program(data : Vec<String>) -> Vec<String> {
+fn run_program(data : &Vec<String>) -> Vec<String> {
     let mut data_int = Vec::with_capacity(data.len());
     data_int.extend(data.iter().map(|val| {
         val.parse::<i32>().unwrap()
@@ -123,13 +123,22 @@ fn main() {
     // Split the input on ","
     let mut prog_input: Vec<String> = contents.split(",").map(ToString::to_string).collect();
 
-    // Replace position 1 with 12
-    prog_input[1] = "12".to_string();
+    'outer: for input_noun in 0..99 {
+        for input_verb in 0..99 {
+            // Replace position 1 with 12
+            prog_input[1] = input_noun.to_string();
 
-    // Replace position 2 with 2
-    prog_input[2] = "2".to_string();
+            // Replace position 2 with 2
+            prog_input[2] = input_verb.to_string();
 
-    let prog_output = run_program(prog_input);
-    println!("output: {}", prog_output.join(","));
-    println!("position 0: {}", prog_output[0]);
+            let prog_output = run_program(&prog_input);
+            println!("output: {}", prog_output.join(","));
+            println!("position 0: {}", prog_output[0]);
+            if prog_output[0] == "19690720" {
+                println!("eureka!: noun={} verb={}", input_noun, input_verb);
+                println!("{}", 100 * input_noun + input_verb);
+                break 'outer;
+            }
+        }
+    }
 }
