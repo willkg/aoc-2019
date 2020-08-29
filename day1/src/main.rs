@@ -9,12 +9,10 @@ use std::path::Path;
 /// Return the amount of fuel required for this mass plus the fuel required.
 fn get_fuel(mass: i32) -> i32 {
     let mut total = 0;
-    let mut fuel = mass;
+    let mut fuel = (mass / 3) - 2;
     while fuel > 0 {
+        total = total + fuel;
         fuel = (fuel / 3) - 2;
-        if fuel > 0 {
-            total = total + fuel;
-        }
     }
     total
 }
