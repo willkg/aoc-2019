@@ -7,49 +7,43 @@ use std::io::prelude::*;
 use std::path::Path;
 
 /// Run the given program and return the output
-fn run_program(data : &Vec<String>) -> Vec<String> {
-    let mut data_int = Vec::with_capacity(data.len());
-    data_int.extend(data.iter().map(|val| {
-        val.parse::<i32>().unwrap()
-    }));
+fn run_program(data : &Vec<usize>) -> Vec<usize> {
+    // Copy the vector
+    let mut data_out = data.to_vec();
 
-    let end_i : usize = data_int.len();
+    let end_i : usize = data_out.len();
     let mut i : usize = 0;
     loop {
         if i >= end_i {
             break;
         }
 
-        let opcode = data_int[i];
+        let opcode = data_out[i];
         match opcode {
             1 => {
-                let lhs_i = data_int[i+1] as usize;
-                let rhs_i = data_int[i+2] as usize;
-                let dest_i = data_int[i+3] as usize;
-                data_int[dest_i] = data_int[lhs_i] + data_int[rhs_i];
+                let lhs_i = data_out[i+1];
+                let rhs_i = data_out[i+2];
+                let dest_i = data_out[i+3];
+                data_out[dest_i] = data_out[lhs_i] + data_out[rhs_i];
                 i = i + 4;
             },
             2 => {
-                let lhs_i = data_int[i+1] as usize;
-                let rhs_i = data_int[i+2] as usize;
-                let dest_i = data_int[i+3] as usize;
-                data_int[dest_i] = data_int[lhs_i] * data_int[rhs_i];
+                let lhs_i = data_out[i+1];
+                let rhs_i = data_out[i+2];
+                let dest_i = data_out[i+3];
+                data_out[dest_i] = data_out[lhs_i] * data_out[rhs_i];
                 i = i + 4;
             },
             99 => {
                 break;
             },
             _ => {
-                eprintln!("Unknown operand: {}", data_int[i]);
+                eprintln!("Unknown operand: {}", data_out[i]);
                 std::process::exit(exitcode::DATAERR);
             },
         }
     }
 
-    let mut data_out : Vec<String> = Vec::with_capacity(data.len());
-    for item in &data_int {
-        data_out.push(item.to_string());
-    }
     data_out
 }
 
@@ -57,16 +51,12 @@ fn run_program(data : &Vec<String>) -> Vec<String> {
 mod tests {
     use super::*;
 
-    fn stringify(data : Vec<&str>) -> Vec<String> {
-        data.iter().map(ToString::to_string).collect()
-    }
-
     /// Test 1 oper
     #[test]
     fn test_run_program_oper_1() {
         assert_eq!(
-            run_program(stringify(vec!["1", "0", "0", "0", "99"])),
-            stringify(vec!["2", "0", "0", "0", "99"])
+            run_program(&vec![1, 0, 0, 0, 99]),
+            vec![2, 0, 0, 0, 99]
         );
     }
 
@@ -74,8 +64,8 @@ mod tests {
     #[test]
     fn test_run_program_oper_2() {
         assert_eq!(
-            run_program(stringify(vec!["2", "3", "0", "3", "99"])),
-            stringify(vec!["2", "3", "0", "6", "99"])
+            run_program(&vec![2, 3, 0, 3, 99]),
+            vec![2, 3, 0, 6, 99]
         );
     }
 
@@ -83,8 +73,8 @@ mod tests {
     #[test]
     fn test_run_program_complex() {
         assert_eq!(
-            run_program(stringify(vec!["1", "1", "1", "4", "99", "5", "6", "0", "99"])),
-            stringify(vec!["30", "1", "1", "4", "2", "5", "6", "0", "99"])
+            run_program(&vec![1, 1, 1, 4, 99, 5, 6, 0, 99]),
+            vec![30, 1, 1, 4, 2, 5, 6, 0, 99]
         );
     }
 }
@@ -120,21 +110,21 @@ fn main() {
     let contents = contents.trim();
     println!("input: {}", contents);
 
-    // Split the input on ","
-    let mut prog_input: Vec<String> = contents.split(",").map(ToString::to_string).collect();
+    // Split the input on "," and convert to usize
+    let mut prog_input: Vec<usize> = contents.split(",").map(|val| usize::from_str_radix(val, 10).unwrap()).collect();
 
     'outer: for input_noun in 0..99 {
         for input_verb in 0..99 {
             // Replace position 1 with 12
-            prog_input[1] = input_noun.to_string();
+            prog_input[1] = input_noun as usize;
 
             // Replace position 2 with 2
-            prog_input[2] = input_verb.to_string();
+            prog_input[2] = input_verb as usize;
 
             let prog_output = run_program(&prog_input);
-            println!("output: {}", prog_output.join(","));
+            println!("output: {:?}", prog_output);
             println!("position 0: {}", prog_output[0]);
-            if prog_output[0] == "19690720" {
+            if prog_output[0] == 19690720 {
                 println!("eureka!: noun={} verb={}", input_noun, input_verb);
                 println!("{}", 100 * input_noun + input_verb);
                 break 'outer;
