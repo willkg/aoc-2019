@@ -21,6 +21,10 @@ impl Point {
     fn distance(&self, other: &Self) -> i32 {
         (self.x - other.x).abs() + (self.y - other.y).abs()
     }
+
+    fn distance_from_origin(&self) -> i32 {
+        self.x.abs() + self.y.abs()
+    }
 }
 
 impl PartialEq for Point {
@@ -45,6 +49,16 @@ mod test_point {
         let p2 = Point::new(-2, -2);
         assert_eq!(origin.distance(&p2), p2.distance(&origin));
     }
+
+    #[test]
+    fn test_distance_from_origin() {
+        assert_eq!(Point::new(5, 2).distance_from_origin(), 7);
+        assert_eq!(Point::new(-5, 2).distance_from_origin(), 7);
+        assert_eq!(Point::new(-5, -2).distance_from_origin(), 7);
+        assert_eq!(Point::new(5, -2).distance_from_origin(), 7);
+
+        assert_eq!(Point::new(-2, -2).distance_from_origin(), 4);
+    }
 }
 
 const H: i32 = 0;
@@ -65,7 +79,7 @@ impl Line {
         }
     }
 
-    /// Return direction of this line: H or V
+    /// Return slope of this line: H or V
     fn direction(&self) -> i32 {
         if self.start.x == self.end.x {
             V
@@ -74,15 +88,26 @@ impl Line {
         }
     }
 
-    /// Return whether this and another line intersect
+    /// Return whether given point is on this line
+    fn has_point(&self, point: &Point) -> bool {
+        if self.direction() == H {
+            return min(self.start.x, self.end.x) <= point.x
+                && max(self.start.x, self.end.x) >= point.x
+                && point.y == self.start.y;
+        } else {
+            return min(self.start.y, self.end.y) <= point.y
+                && max(self.start.y, self.end.y) >= point.y
+                && point.x == self.start.x;
+        }
+    }
+
+    /// Return intersection point or None
     fn intersect(&self, other: &Self) -> Option<Point> {
         if self.direction() == H && other.direction() == V {
-            if min(self.start.x, self.end.x) <= other.start.x
-                && max(self.start.x, self.end.x) >= other.start.x
-                && min(other.start.y, other.end.y) <= self.start.y
-                && max(other.start.y, other.end.y) >= self.start.y
-            {
-                return Some(Point::new(other.start.x, self.start.y));
+            // Figure out the possible intersection point; if they both have it, then yay!
+            let point = Point::new(other.start.x, self.start.y);
+            if self.has_point(&point) && other.has_point(&point) {
+                return Some(point);
             }
         } else if self.direction() == V && other.direction() == H {
             return other.intersect(self);
@@ -107,6 +132,18 @@ mod test_line {
             Line::new(Point::new(0, 0), Point::new(0, 10)).direction(),
             V
         );
+    }
+
+    #[test]
+    fn test_has_point() {
+        let line = Line::new(Point::new(0, 0), Point::new(10, 0));
+
+        assert_eq!(line.has_point(&Point::new(0, 0)), true);
+        assert_eq!(line.has_point(&Point::new(5, 0)), true);
+        assert_eq!(line.has_point(&Point::new(10, 0)), true);
+
+        assert_eq!(line.has_point(&Point::new(-1, 0)), false);
+        assert_eq!(line.has_point(&Point::new(-1, -1)), false);
     }
 
     #[test]
@@ -214,11 +251,8 @@ fn main() {
             let wire_lhs = &wires[wire_lhs_i];
             let wire_rhs = &wires[wire_rhs_i];
 
-            for lhs_i in 0..wire_lhs.len() {
-                for rhs_i in 0..wire_rhs.len() {
-                    let line_lhs = &wire_lhs[lhs_i];
-                    let line_rhs = &wire_rhs[rhs_i];
-
+            for line_lhs in wire_lhs.iter() {
+                for line_rhs in wire_rhs.iter() {
                     match line_lhs.intersect(&line_rhs) {
                         Some(p) => intersections.push(p),
                         None => (),
@@ -229,21 +263,51 @@ fn main() {
     }
     println!("intersections: {:?}", intersections);
 
-    // For each intersection, figure out the distance and then figure out the minimum distance
-    let origin = Point::new(0, 0);
-    let distances: Vec<i32> = intersections
+    // For each intersection, figure out the distance from origin and then figure out the minimum
+    // distance
+    let distances_from_origin: Vec<i32> = intersections
         .iter()
-        .map(|&val| origin.distance(&val))
+        .map(|&val| val.distance_from_origin())
         .collect();
 
-    println!("distances: {:?}", distances);
+    println!("distances from origin: {:?}", distances_from_origin);
 
-    match distances.iter().min() {
+    match distances_from_origin.iter().min() {
         Some(val) => {
-            println!("Minimum distance: {}", val);
+            println!("Minimum distance from origin: {}", val);
         }
         None => {
-            println!("No minimum distance was found.");
+            println!("No minimum distance from origin was found.");
+        }
+    }
+
+    // For each intersection, figure out the number of steps for each wire and add
+    let mut steps = Vec::new();
+    for point in intersections.iter() {
+        let mut total_steps = 0;
+        for wire in wires.iter() {
+            let mut steps = 0;
+            for line in wire.iter() {
+                if line.has_point(&point) {
+                    steps += line.start.distance(&point);
+                    break;
+                } else {
+                    steps += line.start.distance(&line.end);
+                }
+            }
+            total_steps += steps;
+        }
+        steps.push(total_steps);
+    }
+
+    println!("Total steps to intersections: {:?}", steps);
+
+    match steps.iter().min() {
+        Some(val) => {
+            println!("Minimum steps: {}", val);
+        }
+        None => {
+            println!("No minimum steps was found.");
         }
     }
 }
