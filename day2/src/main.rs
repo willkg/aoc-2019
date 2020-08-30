@@ -104,7 +104,7 @@ fn main() {
             eprintln!("Can't read file: {}", e);
             std::process::exit(exitcode::DATAERR);
         },
-    }
+    };
 
     // Remove whitespace from beginning and end
     let contents = contents.trim();
