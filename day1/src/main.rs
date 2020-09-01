@@ -11,7 +11,7 @@ fn get_fuel(mass: i32) -> i32 {
     let mut total = 0;
     let mut fuel = (mass / 3) - 2;
     while fuel > 0 {
-        total = total + fuel;
+        total += fuel;
         fuel = (fuel / 3) - 2;
     }
     total
@@ -49,7 +49,7 @@ fn main() {
         Err(e) => {
             eprintln!("Can't open file. {}", e);
             std::process::exit(exitcode::DATAERR);
-        },
+        }
         Ok(file) => file,
     };
 
@@ -64,7 +64,7 @@ fn main() {
                 let data_i = data.parse::<i32>().unwrap();
                 let fuel = get_fuel(data_i);
                 println!("{} -> {}", data_i, fuel);
-                total = total + fuel;
+                total += fuel;
             }
         };
     }
